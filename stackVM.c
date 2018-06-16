@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "stack.h"
 
+enum { MAX_PROGRAM_LENGTH = 256 };
+
 struct Stack
 {
     int top; // stack pointer
@@ -9,7 +11,8 @@ struct Stack
     int* array; // the stack array 
 };
 
-unsigned program[] = { 0x0164, 0x01C8, 0x0301, 0x0200, 0x0000 };
+//unsigned program[] = { 0x0164, 0x01C8, 0x0301, 0x0200, 0x0000 };
+unsigned program[MAX_PROGRAM_LENGTH];
 
 /* stack */
 struct Stack* stack;
@@ -79,7 +82,10 @@ void showStack()
     for( i=(stack->top); i>=0; i-- )
       printf( "%04X ", stack->array[ i ] );
     }
-    printf( "\n" );
+  else {
+    printf( "empty" );
+  }
+  printf( "\n" );
 }
 
 void run()
@@ -96,6 +102,23 @@ void run()
 
 int main( int argc, const char * argv[] )
 {
+  FILE *fp = fopen("program.s", "r");
+  if(fp == NULL) {
+    printf( "could not find program.s" );
+    return 1;
+  }
+  
+  //unsigned line;
+  printf("program to execute: \n");
+  int i = 0;
+  while(fscanf(fp, "%x%*[^\n]", &program[i]) != EOF) {
+    //program[i] = line;
+    printf("%40x\n", program[i]);
+    i++;
+    if(i > MAX_PROGRAM_LENGTH) break;
+  }
+  fclose(fp);
+
   stack = createStack(100);
   run();
   return 0;
