@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include "stack.h"
 
-// A structure to represent a stack
 struct Stack
 {
     int top; // stack pointer
-    unsigned capacity; // max size of stack. could use a linked list for dynamicly sized stack, but chose a fixed size to emulate the EVM
+    unsigned capacity; // max size of stack. could use a linked list for dynamically sized stack, but chose a fixed size to emulate the EVM
     int* array; // the stack array 
 };
 
