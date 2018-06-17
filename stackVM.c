@@ -110,15 +110,16 @@ int main( int argc, const char * argv[] )
   stack = createStack(100);
 
   for(i = 1; i < argc; i++) {
-    //stack->top = -1;
-
+    /* open and check file */
     const char *arg = argv[i];
     FILE *fp = fopen(arg, "r");
     if(fp == NULL) {
       printf( "could not open %s\n", arg);
-      return 1;
+      break;
+      //return 1;
     }
   
+    /* read lines in file and load into memory */
     printf("program to next execute: %s\n", arg);
     int j = 0;
     while(fscanf(fp, "%x%*[^\n]", &program[j]) != EOF) {
@@ -128,7 +129,9 @@ int main( int argc, const char * argv[] )
     }
     fclose(fp);
 
+    /* starting execution, reset sp, pc and running flag */
     printf("starting execution of %s: \n", arg);
+    stack->top = -1;
     pc = 0;
     running = 1;
     run();
