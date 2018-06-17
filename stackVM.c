@@ -11,7 +11,6 @@ struct Stack
     int* array; // the stack array 
 };
 
-//unsigned program[] = { 0x0164, 0x01C8, 0x0301, 0x0200, 0x0000 };
 unsigned program[MAX_PROGRAM_LENGTH];
 
 /* stack */
@@ -34,8 +33,10 @@ int instrNum = 0;
 void decode( int instr )
 {
   // first byte of instruction is the instruction number 
+  // allows for up to 256 opcodes
   instrNum = (instr & 0xFF00) >> 8;
   // second byte of instruction is immediate value
+  // allows for immediate values up to 256
   imm = (instr & 0xFF);
 }
 
@@ -69,6 +70,31 @@ void eval()
       int j = pop(stack);
       int k = i + j;
       push(stack, k);
+      break;
+    case 4:
+      /* sub */
+      printf( "sub %04X %04X\n", stack->array[ stack->top ], stack->array[ stack->top - 1]  );
+      i = pop(stack);
+      j = pop(stack);
+      k = i - j;
+      push(stack, k);
+      break;
+    case 5:
+      /* mod */
+      printf( "mod %04X %04X\n", stack->array[ stack->top ], stack->array[ stack->top - 1]  );
+      i = pop(stack);
+      j = pop(stack);
+      k = i % j;
+      push(stack, k);
+      break;
+    case 16:
+      /* jump */
+      printf( "jump %04X\n", imm );
+      pc = imm;
+      break;
+    default:
+      /* nop */
+      printf( "nop\n" );
       break;
   }
 }

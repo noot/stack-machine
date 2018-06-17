@@ -1,5 +1,10 @@
 0x0164 // push #100
 0x01C8 // push #200
 0x0300 // add
+0x1008 // jump to line #8
+0x0105 // push #5
+0x0102 // push #2
+0x0400 // sub
 0x0200 // pop
+0xFF00 // invalid
 0x0000 // halt
