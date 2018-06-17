@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "stack.h"
 
-enum { MAX_PROGRAM_LENGTH = 256 };
+enum { MAX_PROGRAM_LENGTH = 256, MAX_OPCODE_LENGTH = 8 };
 
 struct Stack
 {
@@ -37,10 +38,12 @@ void decode( int instr )
 {
   // first byte of instruction is the instruction number 
   // allows for up to 256 opcodes
-  instrNum = (instr & 0xFF00) >> 8;
+  //instrNum = (instr & 0xFF00) >> 8;
+  instrNum = instr;
   // second byte of instruction is immediate value
   // allows for immediate values up to 256
-  imm = (instr & 0xFF);
+  //imm = (instr & 0xFF);
+  //imm = fetch();
 }
 
 /* the VM runs until this flag becomes 0 */
@@ -49,6 +52,7 @@ int running = 1;
 /* evaluate the last decoded instruction */
 void eval()
 {
+  int imm;
   switch( instrNum )
   {
     case 0:
@@ -58,6 +62,7 @@ void eval()
       break;
     case 1:
       /* push */
+      imm = fetch();
       printf( "push #%d\n", imm);
       push(stack, imm);
       break;
@@ -93,47 +98,29 @@ void eval()
     case 16:
       /* branch */
       lr = pc;
-      if(imm != 0) {
-        printf( "b %04X\n", imm );
-        pc = imm; // unconditional jump if addr specified
-      }
-      else {
-        i = pop(stack);
-        printf( "b %04X\n", i );
-        pc = i;
-      }
+      i = pop(stack);
+      printf( "b %04X\n", i );
+      pc = i;
       break;
     case 17:
       /* branch if not zero */
       lr = pc;
       if(pop(stack) == 0) break;
-      if(imm != 0) {
-        printf( "bnz %04X\n", imm );
-        pc = imm; // unconditional jump if addr specified
-      }
-      else {
-        i = pop(stack);
-        printf( "bnz %04X\n", i );
-        pc = i;
-      }
+      i = pop(stack);
+      printf( "bnz %04X\n", i );
+      pc = i;
       break;
     case 18: 
       /* branch if zero */
       lr = pc;
       if(pop(stack) != 0) break;
-      if(imm != 0) {
-        printf( "bz %04X\n", imm );
-        pc = imm; // unconditional jump if addr specified
-      }
-      else {
-        i = pop(stack);
-        printf( "bz %04X\n", i );
-        pc = i;
-      }
+      i = pop(stack);
+      printf( "bz %04X\n", i );
+      pc = i;
       break;
     case 19:
       /* return */
-      printf( "return" );
+      printf( "ret" );
       pc = lr;
       break;
     case 30:  
@@ -141,16 +128,9 @@ void eval()
       printf( "swap %04X %04X\n", stack->array[stack->top], stack->array[stack->top - imm]);
     case 31:
       /* cmp */
-      if(imm == 0){
-        printf( "cmp %04X %04X\n", stack->array[ stack->top ], stack->array[ stack->top - 1] );
-        if(stack->array[ stack->top ] == stack->array[ stack->top - 1]) push(stack, 1);
-        else push(stack, 0);
-      }
-      else {
-       printf( "cmp %04X %04X\n", imm, stack->array[ stack->top ]);
-       if(imm == stack->array[stack->top]) push(stack, 1);
-       else push(stack, 0);
-      }
+      printf( "cmp %04X %04X\n", stack->array[ stack->top ], stack->array[ stack->top - 1] );
+      if(stack->array[ stack->top ] == stack->array[ stack->top - 1]) push(stack, 1);
+      else push(stack, 0);
     default:
       /* nop */
       printf( "nop\n" );
@@ -207,8 +187,32 @@ int main( int argc, const char * argv[] )
     /* read lines in file and load into memory */
     printf("program to next execute: %s\n", arg);
     int j = 0;
-    while(fscanf(fp, "%x%*[^\n]", &program[j]) != EOF) {
-      //printf("%04x\n", program[j]);
+    unsigned temp;
+    char op[MAX_OPCODE_LENGTH];
+    while(fscanf(fp, "%s %x%*[^\n]", op, &temp) != EOF){
+      if ( strncmp(op, "push", strlen("push")) == 0 ) printf("%s %04x\n", op, temp);
+      else printf("%s\n", op);
+      int ret = strncmp(op, "push", strlen("push"));
+      // strncmp returns 0 if strings are equal
+      if ( strncmp(op, "halt", strlen("halt")) == 0 ) program[j] = 0;
+      else if ( strncmp(op, "push", strlen("push")) == 0 ) {
+          program[j] = 1;
+          program[j+1] = temp;
+          j++;
+      }
+      else if ( strncmp(op, "pop", strlen("pop")) == 0 ) program[j] = 2;
+      else if ( strncmp(op, "add", strlen("add")) == 0 ) program[j] = 3;
+      else if ( strncmp(op, "sub", strlen("sub")) == 0 ) program[j] = 4;
+      else if ( strncmp(op, "mod", strlen("sub")) == 0 ) program[j] = 5;
+      else if ( strncmp(op, "b", strlen("b")) == 0 ) program[j] = 16;
+      else if ( strncmp(op, "bnz", strlen("bnz")) == 0 ) program[j] = 17;
+      else if ( strncmp(op, "bz", strlen("bz")) == 0 ) program[j] = 18;
+      else if ( strncmp(op, "ret", strlen("ret")) == 0 ) program[j] = 19;
+      else if ( strncmp(op, "swap", strlen("swap")) == 0 ) program[j] = 30;
+      else if ( strncmp(op, "cmp", strlen("cmp")) == 0 ) program[j] = 31;
+      else if ( strncmp(op, "nop", strlen("nop")) == 0 ) program[j] = 255;
+      else j--;
+      
       j++;
       if(j > MAX_PROGRAM_LENGTH) break;
     }
