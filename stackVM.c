@@ -92,6 +92,15 @@ void eval()
       printf( "jump %04X\n", imm );
       pc = imm;
       break;
+    case 17:
+      /* jumpeq */
+      printf( "jumpeq %04X\n", imm );
+      i = pop(stack);
+      j = pop(stack);
+      if(i == j) pc = imm;
+      push(stack, j);
+      push(stack, i);
+      break;
     default:
       /* nop */
       printf( "nop\n" );
@@ -149,7 +158,7 @@ int main( int argc, const char * argv[] )
     printf("program to next execute: %s\n", arg);
     int j = 0;
     while(fscanf(fp, "%x%*[^\n]", &program[j]) != EOF) {
-      printf("%04x\n", program[j]);
+      //printf("%04x\n", program[j]);
       j++;
       if(j > MAX_PROGRAM_LENGTH) break;
     }
