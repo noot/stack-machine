@@ -108,18 +108,17 @@ int main( int argc, const char * argv[] )
     return 1;
   }
   
-  //unsigned line;
   printf("program to execute: \n");
   int i = 0;
   while(fscanf(fp, "%x%*[^\n]", &program[i]) != EOF) {
-    //program[i] = line;
-    printf("%40x\n", program[i]);
+    printf("%04x\n", program[i]);
     i++;
     if(i > MAX_PROGRAM_LENGTH) break;
   }
   fclose(fp);
 
   stack = createStack(100);
+  printf("starting execution of program: \n");
   run();
   return 0;
 }
