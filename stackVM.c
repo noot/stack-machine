@@ -16,9 +16,12 @@ unsigned program[MAX_PROGRAM_LENGTH];
 /* stack */
 struct Stack* stack;
 
-/* program counter */
+/* proram counter */
 int pc = 0;
+/* immediate */
 int imm = 0;
+/* link register */
+int lr = 0;
 
 /* fetch the next word from the program */
 int fetch()
@@ -88,19 +91,66 @@ void eval()
       push(stack, k);
       break;
     case 16:
-      /* jump */
-      printf( "jump %04X\n", imm );
-      pc = imm;
+      /* branch */
+      lr = pc;
+      if(imm != 0) {
+        printf( "b %04X\n", imm );
+        pc = imm; // unconditional jump if addr specified
+      }
+      else {
+        i = pop(stack);
+        printf( "b %04X\n", i );
+        pc = i;
+      }
       break;
     case 17:
-      /* jumpeq */
-      printf( "jumpeq %04X\n", imm );
-      i = pop(stack);
-      j = pop(stack);
-      if(i == j) pc = imm;
-      push(stack, j);
-      push(stack, i);
+      /* branch if not zero */
+      lr = pc;
+      if(pop(stack) == 0) break;
+      if(imm != 0) {
+        printf( "bnz %04X\n", imm );
+        pc = imm; // unconditional jump if addr specified
+      }
+      else {
+        i = pop(stack);
+        printf( "bnz %04X\n", i );
+        pc = i;
+      }
       break;
+    case 18: 
+      /* branch if zero */
+      lr = pc;
+      if(pop(stack) != 0) break;
+      if(imm != 0) {
+        printf( "bz %04X\n", imm );
+        pc = imm; // unconditional jump if addr specified
+      }
+      else {
+        i = pop(stack);
+        printf( "bz %04X\n", i );
+        pc = i;
+      }
+      break;
+    case 19:
+      /* return */
+      printf( "return" );
+      pc = lr;
+      break;
+    case 30:  
+      /* swap */
+      printf( "swap %04X %04X\n", stack->array[stack->top], stack->array[stack->top - imm]);
+    case 31:
+      /* cmp */
+      if(imm == 0){
+        printf( "cmp %04X %04X\n", stack->array[ stack->top ], stack->array[ stack->top - 1] );
+        if(stack->array[ stack->top ] == stack->array[ stack->top - 1]) push(stack, 1);
+        else push(stack, 0);
+      }
+      else {
+       printf( "cmp %04X %04X\n", imm, stack->array[ stack->top ]);
+       if(imm == stack->array[stack->top]) push(stack, 1);
+       else push(stack, 0);
+      }
     default:
       /* nop */
       printf( "nop\n" );

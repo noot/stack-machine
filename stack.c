@@ -47,3 +47,23 @@ int pop(struct Stack* stack)
         return INT_MIN;
     return stack->array[stack->top--];
 }
+
+// peek at top item on stack
+int peek(struct Stack* stack) 
+{
+    if(isEmpty(stack)) return INT_MIN;
+    return stack->array[stack->top];
+}
+
+// swap top item on stack with ith item below the top
+void swap(struct Stack* stack, int i)
+{
+    if(stack->top < i) return;
+    struct Stack* temp = createStack(i);
+    int topVal = pop(stack);
+    for(int j = 1; j < i; j++) push(temp, pop(stack));
+    int swapVal = pop(stack);
+    push(stack, topVal);
+    for(int j = 0; j < i; j++) push(stack, pop(temp));
+    push(stack, swapVal);
+}
