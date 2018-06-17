@@ -64,7 +64,7 @@ void eval()
       break;
     case 3:
       /* add */
-      printf( "add #%04X #%04X\n", stack->array[ stack->top ], stack->array[ stack->top - 1]  );
+      printf( "add %04X %04X\n", stack->array[ stack->top ], stack->array[ stack->top - 1]  );
       int i = pop(stack);
       int j = pop(stack);
       int k = i + j;
@@ -102,23 +102,37 @@ void run()
 
 int main( int argc, const char * argv[] )
 {
-  FILE *fp = fopen("program.s", "r");
-  if(fp == NULL) {
-    printf( "could not find program.s" );
-    return 1;
-  }
-  
-  printf("program to execute: \n");
-  int i = 0;
-  while(fscanf(fp, "%x%*[^\n]", &program[i]) != EOF) {
-    printf("%04x\n", program[i]);
-    i++;
-    if(i > MAX_PROGRAM_LENGTH) break;
-  }
-  fclose(fp);
+  int i = 1;
+  printf("programs to run: \n");
+  for(i; i < argc; i++) printf("%d: %s\n", i, argv[i]);
+  //printf("%d\n", argc);
 
   stack = createStack(100);
-  printf("starting execution of program: \n");
-  run();
+
+  for(i = 1; i < argc; i++) {
+    //stack->top = -1;
+
+    const char *arg = argv[i];
+    FILE *fp = fopen(arg, "r");
+    if(fp == NULL) {
+      printf( "could not open %s\n", arg);
+      return 1;
+    }
+  
+    printf("program to next execute: %s\n", arg);
+    int j = 0;
+    while(fscanf(fp, "%x%*[^\n]", &program[j]) != EOF) {
+      printf("%04x\n", program[j]);
+      j++;
+      if(j > MAX_PROGRAM_LENGTH) break;
+    }
+    fclose(fp);
+
+    printf("starting execution of %s: \n", arg);
+    pc = 0;
+    running = 1;
+    run();
+  }
+
   return 0;
 }
