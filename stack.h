@@ -7,5 +7,6 @@ int isFull(struct Stack* stack);
 int isEmpty(struct Stack* stack);
 void push(struct Stack* stack, int item);
 int pop(struct Stack* stack);
+void swap(struct Stack* stack, int i);
 
 #endif // STACK_H_

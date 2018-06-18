@@ -59,11 +59,26 @@ int peek(struct Stack* stack)
 void swap(struct Stack* stack, int i)
 {
     if(stack->top < i) return;
+    int topVal;
+    int swapVal;
+
+    if( i == 1 ) {
+      topVal = pop(stack);
+      swapVal = pop(stack);
+      push(stack, topVal);
+      push(stack, swapVal);
+      return;
+    }
+
     struct Stack* temp = createStack(i);
-    int topVal = pop(stack);
-    for(int j = 1; j < i; j++) push(temp, pop(stack));
-    int swapVal = pop(stack);
+    topVal = pop(stack);
+    for(int j = 1; j < i; j++) {
+      push(temp, pop(stack));
+    }
+    swapVal = pop(stack);
     push(stack, topVal);
-    for(int j = 0; j < i; j++) push(stack, pop(temp));
+    for(int j = 1; j < i; j++) {
+      push(stack, pop(temp));
+    }
     push(stack, swapVal);
 }

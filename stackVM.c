@@ -3,7 +3,7 @@
 #include <string.h>
 #include "stack.h"
 
-enum { MAX_PROGRAM_LENGTH = 256, MAX_OPCODE_LENGTH = 8 };
+enum { MAX_PROGRAM_LENGTH = 256, MAX_OPCODE_LENGTH = 4 };
 
 struct Stack
 {
@@ -63,7 +63,7 @@ void eval()
     case 1:
       /* push */
       imm = fetch();
-      printf( "push #%d\n", imm);
+      printf( "push #%d\n", imm );
       push(stack, imm);
       break;
     case 2:
@@ -125,12 +125,16 @@ void eval()
       break;
     case 30:  
       /* swap */
-      printf( "swap %04X %04X\n", stack->array[stack->top], stack->array[stack->top - imm]);
+      imm = fetch();
+      printf( "swp %04X %04X\n", stack->array[stack->top], stack->array[stack->top - imm]);
+      swap(stack, imm);
+      break;
     case 31:
       /* cmp */
       printf( "cmp %04X %04X\n", stack->array[ stack->top ], stack->array[ stack->top - 1] );
       if(stack->array[ stack->top ] == stack->array[ stack->top - 1]) push(stack, 1);
       else push(stack, 0);
+      break;
     default:
       /* nop */
       printf( "nop\n" );
@@ -189,11 +193,20 @@ int main( int argc, const char * argv[] )
     int j = 0;
     unsigned temp;
     char op[MAX_OPCODE_LENGTH];
+
+    // read file
+    // operands are written in hex. change %x to %d for decimal
     while(fscanf(fp, "%s %x%*[^\n]", op, &temp) != EOF){
-      if ( strncmp(op, "push", strlen("push")) == 0 ) printf("%s %04x\n", op, temp);
+      // if comment, ignore
+      if( strncmp(op, "//", 2) == 0 ) break;
+      
+      // print out program
+      if ( strncmp(op, "push", strlen("push")) == 0 || strncmp(op, "swp", strlen("swp")) == 0 ) printf("%s %04x\n", op, temp);
       else printf("%s\n", op);
-      int ret = strncmp(op, "push", strlen("push"));
+
+      // append instruction number into program array
       // strncmp returns 0 if strings are equal
+      // push, swp use immediate value; other opcodes are standalone
       if ( strncmp(op, "halt", strlen("halt")) == 0 ) program[j] = 0;
       else if ( strncmp(op, "push", strlen("push")) == 0 ) {
           program[j] = 1;
@@ -208,7 +221,11 @@ int main( int argc, const char * argv[] )
       else if ( strncmp(op, "bnz", strlen("bnz")) == 0 ) program[j] = 17;
       else if ( strncmp(op, "bz", strlen("bz")) == 0 ) program[j] = 18;
       else if ( strncmp(op, "ret", strlen("ret")) == 0 ) program[j] = 19;
-      else if ( strncmp(op, "swap", strlen("swap")) == 0 ) program[j] = 30;
+      else if ( strncmp(op, "swp", strlen("swp")) == 0 ) {
+          program[j] = 30;
+          program[j+1] = temp;
+          j++;
+      }
       else if ( strncmp(op, "cmp", strlen("cmp")) == 0 ) program[j] = 31;
       else if ( strncmp(op, "nop", strlen("nop")) == 0 ) program[j] = 255;
       else j--;
