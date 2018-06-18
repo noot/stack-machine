@@ -17,7 +17,7 @@ unsigned program[MAX_PROGRAM_LENGTH];
 /* stack */
 struct Stack* stack;
 
-/* proram counter */
+/* program counter */
 int pc = 0;
 /* immediate */
 int imm = 0;
