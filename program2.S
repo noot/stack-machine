@@ -1,5 +1,9 @@
 push 1
 push 2
 add
-pop
+//pop
+nop
+nop
+nop
+push 10
 halt

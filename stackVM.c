@@ -198,7 +198,8 @@ int main( int argc, const char * argv[] )
     // operands are written in hex. change %x to %d for decimal
     while(fscanf(fp, "%s %x%*[^\n]", op, &temp) != EOF){
       // if comment, ignore
-      if( strncmp(op, "//", 2) == 0 ) break;
+      if( strncmp(op, "//", 2) == 0 ) ;
+      else {
       
       // print out program
       if ( strncmp(op, "push", strlen("push")) == 0 || strncmp(op, "swp", strlen("swp")) == 0 ) printf("%s %04x\n", op, temp);
@@ -232,6 +233,7 @@ int main( int argc, const char * argv[] )
       
       j++;
       if(j > MAX_PROGRAM_LENGTH) break;
+      }
     }
     fclose(fp);
 
