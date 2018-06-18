@@ -30,3 +30,4 @@ and so on.
 FF nop
 
 ```
+any invalid opcode is assumed to be a nop
