@@ -3,9 +3,9 @@ simple c implementation of a virtual stack machine
 
 # to run
 
-stackVM program.S
+./stackVM program.S
 
-stackVM program.S program1.S
+./stackVM program.S program1.S
 
 and so on.
 
