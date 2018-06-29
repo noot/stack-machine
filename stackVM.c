@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "./uthash/include/uthash.h"
 #include "stack.h"
 
 enum { MAX_PROGRAM_LENGTH = 256, MAX_OPCODE_LENGTH = 4 };
@@ -38,11 +39,11 @@ void decode( int instr )
 {
   // first byte of instruction is the instruction number 
   // allows for up to 256 opcodes
-  //instrNum = (instr & 0xFF00) >> 8;
-  instrNum = instr;
+  instrNum = (instr & 0xFF00) >> 8;
+  //instrNum = instr;
   // second byte of instruction is immediate value
   // allows for immediate values up to 256
-  //imm = (instr & 0xFF);
+  imm = (instr & 0xFF);
   //imm = fetch();
 }
 
@@ -52,7 +53,8 @@ int running = 1;
 /* evaluate the last decoded instruction */
 void eval()
 {
-  int imm;
+  int nextPc;
+  int cmp;
   switch( instrNum )
   {
     case 0:
@@ -62,7 +64,7 @@ void eval()
       break;
     case 1:
       /* push */
-      imm = fetch();
+      //imm = fetch();
       printf( "push #%d\n", imm );
       push(stack, imm);
       break;
@@ -104,19 +106,23 @@ void eval()
       break;
     case 17:
       /* branch if not zero */
-      lr = pc;
-      if(pop(stack) == 0) break;
-      i = pop(stack);
-      printf( "bnz %04X\n", i );
-      pc = i;
+      nextPc = pop(stack);
+      cmp = pop(stack);
+      printf( "bnz %04X\n", cmp );
+      if(cmp != 0) {
+        lr = pc;
+        pc = nextPc;
+      }
       break;
     case 18: 
       /* branch if zero */
-      lr = pc;
-      if(pop(stack) != 0) break;
-      i = pop(stack);
-      printf( "bz %04X\n", i );
-      pc = i;
+      nextPc = pop(stack);
+      cmp = pop(stack);
+      printf( "bz %04X\n", cmp );
+      if(cmp == 0) {
+        lr = pc;
+        pc = nextPc;
+      }
       break;
     case 19:
       /* return */
@@ -125,7 +131,6 @@ void eval()
       break;
     case 30:  
       /* swap */
-      imm = fetch();
       printf( "swp %04X %04X\n", stack->array[stack->top], stack->array[stack->top - imm]);
       swap(stack, imm);
       break;
@@ -172,7 +177,7 @@ void run()
 int main( int argc, const char * argv[] )
 {
   int i = 1;
-  printf("programs to run: \n");
+  printf("*** programs to run ***\n");
   for(i; i < argc; i++) printf("%d: %s\n", i, argv[i]);
   //printf("%d\n", argc);
 
@@ -189,7 +194,7 @@ int main( int argc, const char * argv[] )
     }
   
     /* read lines in file and load into memory */
-    printf("program to next execute: %s\n", arg);
+    printf("\n*** program to next execute: %s ***\n", arg);
     int j = 0;
     unsigned temp;
     char op[MAX_OPCODE_LENGTH];
@@ -198,39 +203,35 @@ int main( int argc, const char * argv[] )
     // operands are written in hex. change %x to %d for decimal
     while(fscanf(fp, "%s %x%*[^\n]", op, &temp) != EOF){
       // if comment, ignore
+      printf("op: %s\n", op);
       if( strncmp(op, "//", 2) == 0 ) ;
       else {
       
       // print out program
-      if ( strncmp(op, "push", strlen("push")) == 0 || strncmp(op, "swp", strlen("swp")) == 0 ) printf("%s %04x\n", op, temp);
-      else printf("%s\n", op);
+      if ( strncmp(op, "push", strlen("push")) == 0 || strncmp(op, "swp", strlen("swp")) == 0 ) printf("%s %04x\t\t", op, temp);
+      else printf("%s\t\t\t", op);
 
       // append instruction number into program array
       // strncmp returns 0 if strings are equal
       // push, swp use immediate value; other opcodes are standalone
       if ( strncmp(op, "halt", strlen("halt")) == 0 ) program[j] = 0;
-      else if ( strncmp(op, "push", strlen("push")) == 0 ) {
-          program[j] = 1;
-          program[j+1] = temp;
-          j++;
-      }
-      else if ( strncmp(op, "pop", strlen("pop")) == 0 ) program[j] = 2;
-      else if ( strncmp(op, "add", strlen("add")) == 0 ) program[j] = 3;
-      else if ( strncmp(op, "sub", strlen("sub")) == 0 ) program[j] = 4;
-      else if ( strncmp(op, "mod", strlen("sub")) == 0 ) program[j] = 5;
-      else if ( strncmp(op, "b", strlen("b")) == 0 ) program[j] = 16;
-      else if ( strncmp(op, "bnz", strlen("bnz")) == 0 ) program[j] = 17;
-      else if ( strncmp(op, "bz", strlen("bz")) == 0 ) program[j] = 18;
-      else if ( strncmp(op, "ret", strlen("ret")) == 0 ) program[j] = 19;
-      else if ( strncmp(op, "swp", strlen("swp")) == 0 ) {
-          program[j] = 30;
-          program[j+1] = temp;
-          j++;
-      }
-      else if ( strncmp(op, "cmp", strlen("cmp")) == 0 ) program[j] = 31;
-      else if ( strncmp(op, "nop", strlen("nop")) == 0 ) program[j] = 255;
+      else if ( strncmp(op, "push", strlen("push")) == 0 ) 
+	program[j] = ( ( (1 & 0xFF) << 8 ) | ( temp & 0xFF ) ) & 0xFFFF;
+      else if ( strncmp(op, "pop", strlen("pop")) == 0 ) program[j] = ( (2 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "add", strlen("add")) == 0 ) program[j] = ( (3 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "sub", strlen("sub")) == 0 ) program[j] = ( (4 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "mod", strlen("sub")) == 0 ) program[j] = ( (5 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "b", strlen("b")) == 0 ) program[j] = ( (16 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "bnz", strlen("bnz")) == 0 ) program[j] = ( (17 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "bz", strlen("bz")) == 0 ) program[j] = ( (18 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "ret", strlen("ret")) == 0 ) program[j] = ( (19 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "swp", strlen("swp")) == 0 ) 
+          program[j] = ( ( (30 & 0xFF) << 8 ) | ( temp & 0xFF ) ) & 0xFFFF;
+      else if ( strncmp(op, "cmp", strlen("cmp")) == 0 ) program[j] = ( (31 & 0xFF) << 8 ) & 0xFFFF;
+      else if ( strncmp(op, "nop", strlen("nop")) == 0 ) program[j] = ( (0xFF) << 8 ) & 0xFFFF;
       else j--;
       
+      printf("%02x %04x\n", j, program[j]);
       j++;
       if(j > MAX_PROGRAM_LENGTH) break;
       }
@@ -238,7 +239,7 @@ int main( int argc, const char * argv[] )
     fclose(fp);
 
     /* starting execution, reset sp, pc and running flag */
-    printf("starting execution of %s: \n", arg);
+    printf("\n*** starting execution of %s: ***\n", arg);
     stack->top = -1;
     pc = 0;
     running = 1;
